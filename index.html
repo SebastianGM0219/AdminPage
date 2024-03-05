@@ -103,7 +103,7 @@
         
   
             document.getElementById('spinner').style.display = 'block';
-            fetch('https://c920-18-118-218-235.ngrok-free.app/show_all',{method: 'POST'})  // Adjust the endpoint as needed
+   /*         fetch('https://c920-18-118-218-235.ngrok-free.app/show_all',{method: 'POST'})  // Adjust the endpoint as needed
 //        fetch('http://127.0.0.1:5000/show_all',{method: 'POST'})  // Adjust the endpoint as needed
             .then(response => response.json())
             .then(data => {
@@ -158,6 +158,64 @@
                 });
                 document.getElementById('spinner').style.display = 'none';
 
+            })
+            .catch(error => {
+                document.getElementById('spinner').style.display = 'none';
+                console.error('There was an error!', error);
+            });*/
+
+            const urlParams = new URLSearchParams(window.location.search);
+        const pdfId = urlParams.get('pdf_id');
+        const endpoint = pdfId ? `https://c920-18-118-218-235.ngrok-free.app/show_all/${pdfId}.pdf` : 'https://c920-18-118-218-235.ngrok-free.app/show_all';
+        fetch(endpoint, { method: 'POST' })  
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#pdf-table tbody');
+                
+                data.forEach(pdf => {
+                    const row = document.createElement('tr');
+                    
+                    const idCell = document.createElement('td');
+                    idCell.textContent = pdf.id + '.pdf';
+                    row.appendChild(idCell);
+
+                    const downloadCell = document.createElement('td');
+                    const downloadButton = document.createElement('button');
+                    downloadButton.textContent = 'Download';
+                    const spinner = document.createElement('div');
+                    spinner.className = 'spinner';
+                    spinner.style.display = 'none';
+
+                    downloadButton.onclick = function() {
+                        toggleDownloadBtnSpinner(downloadButton);
+                        fetch(endpoint)
+                            .then(response => {
+                                toggleDownloadBtnSpinner(downloadButton, false);
+                                return response.blob();
+                            })
+                            .then(blob => {
+                                const url = window.URL.createObjectURL(new Blob([blob]));
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = pdf.id + '.pdf';
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+                                downloader.style.display = 'none';
+                            })
+                            .catch(error => {
+                                toggleDownloadBtnSpinner(downloadButton, false);
+                                // alert('Download failed');
+                            });
+                    };
+                    downloadCell.appendChild(downloadButton);
+                    downloadCell.appendChild(spinner);
+                    row.appendChild(downloadCell);
+
+                    tbody.appendChild(row);
+                });
+                document.getElementById('spinner').style.display = 'none';
             })
             .catch(error => {
                 document.getElementById('spinner').style.display = 'none';
